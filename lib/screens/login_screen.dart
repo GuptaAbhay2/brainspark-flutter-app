@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
@@ -21,17 +23,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() { _loading = true; _errorMsg = null; });
+    setState(() { 
+      _loading = true; 
+      _errorMsg = null; 
+    });
 
-    final error = await ref.read(userProvider.notifier).loginWithPassword(
-      _usernameCtrl.text.trim(),
-      _passwordCtrl.text.trim(),
-      isRegister: !_isLogin,
-    );
+    try {
+      final error = await ref.read(userProvider.notifier).loginWithPassword(
+        _usernameCtrl.text.trim(),
+        _passwordCtrl.text.trim(),
+        isRegister: !_isLogin,
+      );
 
-    if (mounted) {
-      setState(() { _loading = false; _errorMsg = error; });
-      if (error == null) context.go('/home');
+      if (mounted) {
+        if (error == null) {
+          // 🔑 Phone memory me login success save kar rahe hain
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('is_logged_in', true);
+          await prefs.setString('username', _usernameCtrl.text.trim());
+
+          if (mounted) context.go('/home');
+        } else {
+          setState(() { _errorMsg = error; });
+        }
+      }
+    } catch (e) {
+      // 👈 Actual error screen par print hoga
+      if (mounted) {
+        setState(() {
+          _errorMsg = "ACTUAL ERROR: $e"; 
+        });
+      }
+    } finally {
+      // 👈 Success ho ya Fail, loader HAMESHA band hoga
+      if (mounted) {
+        setState(() { _loading = false; });
+      }
     }
   }
 
@@ -110,8 +137,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'Required';
                           if (v.trim().length < 3) return 'Min 3 characters';
-                          if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim()))
+                          if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) {
                             return 'Letters, numbers, underscore only';
+                          }
                           return null;
                         },
                       ),
