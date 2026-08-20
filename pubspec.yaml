@@ -37,4 +37,5 @@ flutter:
 
   assets:
     - assets/
-    - assets/icon/app_icon.png
+    - assets/icon/
+    - assets/cards/
