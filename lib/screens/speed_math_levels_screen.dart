@@ -1,284 +1,169 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'speed_math_game_screen.dart';
 
-class SpeedMathLevelsScreen extends StatefulWidget {
+class SpeedMathLevelsScreen extends StatelessWidget {
   const SpeedMathLevelsScreen({super.key});
-  @override State<SpeedMathLevelsScreen> createState() => _LevelsState();
-}
-
-class _LevelsState extends State<SpeedMathLevelsScreen> {
-  late Box _box;
-  int _unlockedUpTo = 1; // level 1 always unlocked
-
-  // Level config
-  static const _totalLevels = 30;
-
-  static Box getBox() => Hive.box('userBox');
-
-  static Map<String, dynamic> levelConfig(int level) {
-    // Timer
-    int timer;
-    if (level <= 5)       timer = 120; // 2 min
-    else if (level <= 10) timer = 90;  // 1:30
-    else if (level <= 25) timer = 60;  // 1 min
-    else                  timer = 15;  // 15 sec
-
-    // Questions count
-    int qCount;
-    if (level <= 5)       qCount = 5;
-    else if (level <= 15) qCount = 7;
-    else                  qCount = 10;
-
-    // Difficulty
-    String diff;
-    if (level <= 5)       diff = 'easy';
-    else if (level <= 15) diff = 'medium';
-    else                  diff = 'hard';
-
-    // Points
-    int pts = level * 10;
-
-    // Icon & color — unique per group
-    String icon; Color color; String bg;
-    if (level <= 5) {
-      icon = '🌱'; color = const Color(0xFF38EF7D); bg = 'easy';
-    } else if (level <= 10) {
-      icon = '⚡'; color = const Color(0xFF3B82F6); bg = 'medium';
-    } else if (level <= 15) {
-      icon = '🔥'; color = const Color(0xFFF7971E); bg = 'medium';
-    } else if (level <= 20) {
-      icon = '💎'; color = const Color(0xFFA78BFA); bg = 'hard';
-    } else if (level <= 25) {
-      icon = '🌀'; color = const Color(0xFFE8345A); bg = 'hard';
-    } else {
-      icon = '👑'; color = const Color(0xFFFFD700); bg = 'expert';
-    }
-
-    return {
-      'timer': timer,
-      'qCount': qCount,
-      'diff': diff,
-      'pts': pts,
-      'icon': icon,
-      'color': color,
-      'bg': bg,
-      'timerLabel': timer >= 60
-          ? '${timer ~/ 60}:${(timer % 60).toString().padLeft(2,'0')}'
-          : '${timer}s',
-    };
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _box = Hive.box('userBox');
-    _unlockedUpTo = _box.get('speedmath_unlocked', defaultValue: 1);
-  }
-
-  void _refreshUnlocked() {
-    setState(() {
-      _unlockedUpTo = _box.get('speedmath_unlocked', defaultValue: 1);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    final box = Hive.box('userBox');
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0E17),
-      body: SafeArea(
-        child: Column(children: [
-          // ── Header ────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C2E),
-              border: Border(bottom: BorderSide(
-                color: Colors.white.withOpacity(0.04)))),
-            child: Row(children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F0E17),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.arrow_back_ios_new,
-                    color: Colors.white, size: 16),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Speed Math',
-                  style: GoogleFonts.inter(fontSize: 20,
-                    fontWeight: FontWeight.w800, color: Colors.white)),
-                Text('$_unlockedUpTo/$_totalLevels levels unlocked',
-                  style: GoogleFonts.inter(fontSize: 12,
-                    color: Colors.white.withOpacity(0.4))),
-              ]),
-              const Spacer(),
-              const Text('⚡', style: TextStyle(fontSize: 28)),
-            ]),
+      backgroundColor: const Color(0xFF0F0F1E),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0F0F1E),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Speed Math Levels',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white,
           ),
+        ),
+        centerTitle: true,
+      ),
+      body: ValueListenableBuilder(
+        valueListenable: box.listenable(),
+        builder: (context, Box userBox, _) {
+          final unlockedLevel = userBox.get('speedmath_unlocked', defaultValue: 1) as int;
 
-          // ── Legend ────────────────────────────────────────────────
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
-            child: Row(children: [
-              _legend('🌱', 'Starter', const Color(0xFF38EF7D)),
-              _legend('⚡', 'Easy', const Color(0xFF3B82F6)),
-              _legend('🔥', 'Medium', const Color(0xFFF7971E)),
-              _legend('💎', 'Hard', const Color(0xFFA78BFA)),
-              _legend('🌀', 'Expert', const Color(0xFFE8345A)),
-              _legend('👑', 'Master', const Color(0xFFFFD700)),
-            ]),
-          ),
+          return GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            physics: const BouncingScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.95,
+            ),
+            itemCount: 30,
+            itemBuilder: (context, index) {
+              final levelNumber = index + 1;
+              final isUnlocked = levelNumber <= unlockedLevel;
+              final stars = userBox.get('speedmath_level_${levelNumber}_stars', defaultValue: 0) as int;
 
-          // ── Level Grid ────────────────────────────────────────────
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: _totalLevels,
-              itemBuilder: (_, i) {
-                final level   = i + 1;
-                final config  = levelConfig(level);
-                final unlocked = level <= _unlockedUpTo;
-                final completed = level < _unlockedUpTo;
-                final color   = config['color'] as Color;
-                final stars   = _box.get('level_${level}_stars', defaultValue: 0) as int;
-
-                return GestureDetector(
-                  onTap: unlocked ? () async {
-                    HapticFeedback.lightImpact();
-                    await Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => SpeedMathGameScreen(level: level),
-                    ));
-                    _refreshUnlocked();
-                  } : () {
-                    HapticFeedback.mediumImpact();
+              return _LevelCard(
+                levelNumber: levelNumber,
+                isUnlocked: isUnlocked,
+                stars: stars,
+                onTap: () {
+                  if (isUnlocked) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SpeedMathGameScreen(levelNumber: levelNumber),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          '🔒 Complete level ${level - 1} to unlock!',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                        backgroundColor: const Color(0xFF1C1C2E),
+                          'Level ${levelNumber - 1} complete karo pehle!',
+                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500),
+                        ),
+                        backgroundColor: const Color(0xFF2D2B55),
                         behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        duration: const Duration(seconds: 1),
                       ),
                     );
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    decoration: BoxDecoration(
-                      color: unlocked
-                        ? color.withOpacity(completed ? 0.15 : 0.1)
-                        : const Color(0xFF1C1C2E),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: unlocked
-                          ? color.withOpacity(completed ? 0.6 : 0.3)
-                          : Colors.white.withOpacity(0.05),
-                        width: level == _unlockedUpTo ? 2 : 1),
-                      boxShadow: level == _unlockedUpTo ? [
-                        BoxShadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 16, offset: const Offset(0, 4))
-                      ] : [],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Top — level number
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: unlocked
-                                    ? color.withOpacity(0.2)
-                                    : Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8)),
-                                child: Text('$level',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11, fontWeight: FontWeight.w800,
-                                    color: unlocked
-                                      ? color : Colors.white.withOpacity(0.2))),
-                              ),
-                              if (completed && stars > 0)
-                                Row(children: List.generate(3, (si) =>
-                                  Text(si < stars ? '⭐' : '☆',
-                                    style: const TextStyle(fontSize: 8)))),
-                            ],
-                          ),
-
-                          // Middle — icon
-                          Text(
-                            unlocked ? config['icon'] as String : '🔒',
-                            style: TextStyle(
-                              fontSize: 32,
-                              color: unlocked ? null : Colors.white.withOpacity(0.15)),
-                          ),
-
-                          // Bottom — timer + current tag
-                          Column(children: [
-                            Text(config['timerLabel'] as String,
-                              style: GoogleFonts.inter(
-                                fontSize: 11, fontWeight: FontWeight.w700,
-                                color: unlocked
-                                  ? color : Colors.white.withOpacity(0.2))),
-                            if (level == _unlockedUpTo)
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  borderRadius: BorderRadius.circular(6)),
-                                child: Text('PLAY',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 8, fontWeight: FontWeight.w800,
-                                    color: Colors.white)),
-                              ),
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ]),
+                  }
+                },
+              );
+            },
+          );
+        },
       ),
     );
   }
+}
 
-  Widget _legend(String icon, String label, Color color) => Container(
-    margin: const EdgeInsets.only(right: 12),
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.3))),
-    child: Row(children: [
-      Text(icon, style: const TextStyle(fontSize: 12)),
-      const SizedBox(width: 4),
-      Text(label, style: GoogleFonts.inter(
-        fontSize: 11, fontWeight: FontWeight.w600, color: color)),
-    ]),
-  );
+class _LevelCard extends StatelessWidget {
+  final int levelNumber;
+  final bool isUnlocked;
+  final int stars;
+  final VoidCallback onTap;
+
+  const _LevelCard({
+    required this.levelNumber,
+    required this.isUnlocked,
+    required this.stars,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isUnlocked ? const Color(0xFF1C1C2E) : const Color(0xFF141424),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isUnlocked ? const Color(0xFF6C5CE7).withOpacity(0.6) : Colors.white10,
+            width: 1.5,
+          ),
+          boxShadow: isUnlocked
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF6C5CE7).withOpacity(0.15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (!isUnlocked) ...[
+              const Icon(Icons.lock_rounded, color: Colors.white24, size: 26),
+              const SizedBox(height: 6),
+              Text(
+                'Lvl $levelNumber',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white24,
+                ),
+              ),
+            ] else ...[
+              Text(
+                'Lvl $levelNumber',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (starIndex) {
+                  final isEarned = starIndex < stars;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Icon(
+                      isEarned ? Icons.star_rounded : Icons.star_outline_rounded,
+                      size: 18,
+                      color: isEarned ? const Color(0xFFFFD15C) : Colors.white24,
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
