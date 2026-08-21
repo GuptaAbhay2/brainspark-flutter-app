@@ -41,13 +41,11 @@ class ApiService {
         final statusCode = e.response?.statusCode;
         final data = e.response?.data;
 
-        // Backend se aaye hue specific message ko check karo
         if (data is Map<String, dynamic>) {
           if (data.containsKey('error')) return {'error': data['error'].toString()};
           if (data.containsKey('detail')) return {'error': data['detail'].toString()};
         }
 
-        // Standard Status Codes Handling
         if (statusCode == 404) {
           return {'error': 'User not registered!'};
         } else if (statusCode == 400 || statusCode == 401) {
@@ -61,29 +59,45 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getProfile(int userId) async {
-    final res = await _dio.get('/users/profile/$userId/');
-    return res.data;
+    try {
+      final res = await _dio.get('/users/profile/$userId/');
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<Map<String, dynamic>> getUserByEmail(String email) async {
-    final username = email.replaceAll('@brainspark.app', '');
-    final res = await _dio.get('/users/by-email/',
-        queryParameters: {'email': email, 'username': username});
-    return res.data;
+    try {
+      final username = email.replaceAll('@brainspark.app', '');
+      final res = await _dio.get('/users/by-email/',
+          queryParameters: {'email': email, 'username': username});
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<Map<String, dynamic>> getPuzzle(
       String type, String difficulty) async {
-    final res = await _dio.get('/puzzles/',
-        queryParameters: {'type': type, 'difficulty': difficulty});
-    return res.data;
+    try {
+      final res = await _dio.get('/puzzles/',
+          queryParameters: {'type': type, 'difficulty': difficulty});
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<Map<String, dynamic>> verifySolution(
       int puzzleId, dynamic answer) async {
-    final res = await _dio.post('/puzzles/verify/',
-        data: {'puzzle_id': puzzleId, 'answer': answer});
-    return res.data;
+    try {
+      final res = await _dio.post('/puzzles/verify/',
+          data: {'puzzle_id': puzzleId, 'answer': answer});
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {'error': 'Verification failed'};
+    }
   }
 
   static Future<Map<String, dynamic>> submitScore({
@@ -94,40 +108,64 @@ class ApiService {
     required int hintsUsed,
     required bool completed,
   }) async {
-    final res = await _dio.post('/sessions/submit/', data: {
-      'user_id':    userId,
-      'puzzle_id':  puzzleId,
-      'score':      score,
-      'time_taken': timeTaken,
-      'hints_used': hintsUsed,
-      'completed':  completed,
-    });
-    return res.data;
+    try {
+      final res = await _dio.post('/sessions/submit/', data: {
+        'user_id': userId,
+        'puzzle_id': puzzleId,
+        'score': score,
+        'time_taken': timeTaken,
+        'hints_used': hintsUsed,
+        'completed': completed,
+      });
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<List<dynamic>> getGlobalLeaderboard() async {
-    final res = await _dio.get('/leaderboard/global/');
-    return res.data;
+    try {
+      final res = await _dio.get('/leaderboard/global/');
+      return res.data is List ? res.data : [];
+    } catch (e) {
+      return [];
+    }
   }
 
   static Future<List<dynamic>> getWeeklyLeaderboard() async {
-    final res = await _dio.get('/leaderboard/weekly/');
-    return res.data;
+    try {
+      final res = await _dio.get('/leaderboard/weekly/');
+      return res.data is List ? res.data : [];
+    } catch (e) {
+      return [];
+    }
   }
 
   static Future<Map<String, dynamic>> getUserRank(int userId) async {
-    final res = await _dio.get('/leaderboard/rank/$userId/');
-    return res.data;
+    try {
+      final res = await _dio.get('/leaderboard/rank/$userId/');
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<Map<String, dynamic>> getDailyChallenge() async {
-    final res = await _dio.get('/daily/');
-    return res.data;
+    try {
+      final res = await _dio.get('/daily/');
+      return res.data is Map<String, dynamic> ? res.data : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   static Future<String> getHint(int puzzleId, String userAnswer) async {
-    final res = await _dio.post('/hints/',
-        data: {'puzzle_id': puzzleId, 'user_answer': userAnswer});
-    return res.data['hint'] ?? 'Think carefully about the pattern!';
+    try {
+      final res = await _dio.post('/hints/',
+          data: {'puzzle_id': puzzleId, 'user_answer': userAnswer});
+      return res.data['hint'] ?? 'Think carefully about the pattern!';
+    } catch (e) {
+      return 'Think carefully about the pattern!';
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../providers/user_provider.dart';
 import 'api_service.dart';
 
@@ -12,27 +13,36 @@ class ScoreService {
   }) async {
     if (score <= 0) return;
 
-    // addScore updates streak + points + games
+    // 1. Local state (Riverpod) + Hive local box update karo
     ref.read(userProvider.notifier).addScore(score);
 
-    // Try backend sync
-    try {
-      final user = ref.read(userProvider);
-      if (user.userId != null) {
+    // 2. Fetch User ID with Hive Fallback
+    final box = Hive.box('userBox');
+    final userId = ref.read(userProvider).userId ?? box.get('userId');
+
+    // 3. Sync score with Backend DB
+    if (userId != null) {
+      try {
         final res = await ApiService.submitScore(
-          userId: user.userId!,
+          userId: userId,
           puzzleId: puzzleId,
           score: score,
           timeTaken: 0,
           hintsUsed: hintsUsed,
           completed: completed,
         );
-        ref.read(userProvider.notifier).syncFromBackend(
-          res['brain_score']    ?? user.brainScore,
-          res['current_streak'] ?? user.currentStreak,
-        );
-      }
-    } catch (_) {}
+
+        final updatedScore = res['brain_score'] ?? res['user']?['brain_score'];
+        final updatedStreak = res['current_streak'] ?? res['user']?['current_streak'];
+
+        if (updatedScore != null || updatedStreak != null) {
+          ref.read(userProvider.notifier).syncFromBackend(
+            (updatedScore as int?) ?? ref.read(userProvider).brainScore,
+            (updatedStreak as int?) ?? ref.read(userProvider).currentStreak,
+          );
+        }
+      } catch (_) {}
+    }
   }
 
   static bool canAffordHint(WidgetRef ref) =>

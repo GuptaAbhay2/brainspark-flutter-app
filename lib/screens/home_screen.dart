@@ -119,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
               // 1️⃣ DAILY CHALLENGE HERO BANNER (TOP & TALLER)
               _dailyChallengeHeroBanner(context),
 
-              const SizedBox(height: 17),
+              const SizedBox(height: 20),
 
               // 2️⃣ USER STATS (BELOW DAILY CHALLENGE)
               Row(
@@ -183,7 +183,7 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
-                childAspectRatio: 0.88,
+                childAspectRatio: 1.02,
                 children: [
                   _gameCard(
                     context,
@@ -247,15 +247,21 @@ class HomeScreen extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(
-              icon: Icons.grid_view_rounded, // Fixed icon
-              label: 'Arenas',
-              active: true,
+            GestureDetector(
+              onTap: () => context.go('/'),
+              child: _navItem(
+                icon: Icons.grid_view_rounded,
+                label: 'Arenas',
+                active: true,
+              ),
             ),
-            _navItem(
-              icon: Icons.leaderboard_rounded,
-              label: 'Ranks',
-              active: false,
+            GestureDetector(
+              onTap: () => context.push('/leaderboard'),
+              child: _navItem(
+                icon: Icons.leaderboard_rounded,
+                label: 'Ranks',
+                active: false,
+              ),
             ),
             GestureDetector(
               onTap: () => context.push('/profile'),
@@ -269,7 +275,7 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
+  } // <-- IS CLOSING BRACE SE ERROR FIX HO GAYA
 
   // ───────────────── TALL HERO DAILY CHALLENGE BANNER ─────────────────
   Widget _dailyChallengeHeroBanner(BuildContext context) {
@@ -300,7 +306,6 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Badge Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -328,27 +333,9 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFD700).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '+50 XP',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFFFFD700),
-                    ),
-                  ),
-                ),
               ],
             ),
-
             const SizedBox(height: 18),
-
-            // Main Title
             Text(
               "Today's Brain Drill",
               style: GoogleFonts.poppins(
@@ -358,22 +345,16 @@ class HomeScreen extends ConsumerWidget {
                 height: 1.2,
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // Description Subtitle
             Text(
-              'Complete 3 quick cognitive rounds to boost your brain score & keep your daily streak alive!',
+              'Play & Learn using our interactive brain training exercises and keep your daily streak alive!',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: Colors.white70,
                 height: 1.4,
               ),
             ),
-
             const SizedBox(height: 22),
-
-            // Big Full-Width CTA Button
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),
