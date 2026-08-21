@@ -647,9 +647,6 @@ class _LogicState extends ConsumerState<LogicPuzzleScreen>
                       ),
                       child: Column(
                         children: [
-                          Text(e.value['emoji'] as String,
-                              style: const TextStyle(fontSize: 26)),
-                          const SizedBox(height: 8),
                           Text(
                             e.value['label'] as String,
                             style: GoogleFonts.outfit(

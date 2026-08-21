@@ -22,6 +22,6 @@ final appRouter = GoRouter(
     GoRoute(path: '/leaderboard',    builder: (c, s) => const LeaderboardScreen()),
     GoRoute(path: '/profile',        builder: (c, s) => const ProfileScreen()),
     GoRoute(path: '/memory',         builder: (c, s) => const MemoryLevelsScreen()),
-    GoRoute(path: '/reaction-chain', builder: (c, s) => const ReactionChainScreen()),
+    GoRoute(path: '/number-tap', builder: (c, s) => const ReactionChainScreen()),
   ],
 );
