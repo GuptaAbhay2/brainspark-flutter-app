@@ -224,163 +224,358 @@ class _MemGameState extends ConsumerState<MemoryGameScreen>
     }
   }
 
-  void _showResultDialog({required String reason}) {
+void _showResultDialog({required String reason}) {
     final won = reason == 'won';
     _unlockNext(won);
     if (won) _celebCtrl.forward(from: 0);
     final stars = _calcStars(won);
     final color = _config['color'] as Color;
 
-    final title   = won ? 'Level ${widget.level} Complete!'
-        : reason == 'moves' ? 'Out of Moves!' : "Time's Up!";
-    final subtitle = won ? 'Next level unlocked! 🔓'
-        : reason == 'moves' ? 'Used all moves before finding every pair'
-        : 'Find all pairs before time runs out';
-    final emoji = won ? '🎉' : reason == 'moves' ? '😵' : '⏱';
+    final title = won
+        ? 'Level ${widget.level} Cleared!'
+        : reason == 'moves'
+            ? 'Out of Moves!'
+            : "Time's Up!";
+    final subtitle = won
+        ? 'Great performance! Next level unlocked.'
+        : reason == 'moves'
+            ? 'You ran out of moves before finding all pairs.'
+            : 'Timer expired before all pairs were matched.';
+
+    final mainIcon = won
+        ? Icons.emoji_events_rounded
+        : reason == 'moves'
+            ? Icons.ads_click_rounded
+            : Icons.timer_off_rounded;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.88),
+      barrierColor: Colors.black.withOpacity(0.85),
       builder: (_) => ScaleTransition(
         scale: won ? _celebAnim : const AlwaysStoppedAnimation(1.0),
         child: Dialog(
           backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Container(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C2E),
+              color: const Color(0xFF161622),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: won ? color.withOpacity(0.4) : Colors.white.withOpacity(0.08)),
-              boxShadow: [BoxShadow(
-                color: (won ? color : Colors.white).withOpacity(0.15), blurRadius: 40)],
+                color: won ? color.withOpacity(0.35) : Colors.white.withOpacity(0.08),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: (won ? color : Colors.black).withOpacity(0.25),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                )
+              ],
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                width: 88, height: 88,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: won
-                      ? [color, color.withOpacity(0.7)]
-                      : [const Color(0xFF2C2C3E), const Color(0xFF1C1C2E)]),
-                  shape: BoxShape.circle,
-                  boxShadow: won ? [BoxShadow(
-                    color: color.withOpacity(0.4), blurRadius: 24)] : [],
-                ),
-                child: Center(child: Text(emoji, style: const TextStyle(fontSize: 40))),
-              ),
-              const SizedBox(height: 16),
-              Text(title, textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 20,
-                  fontWeight: FontWeight.w800, color: Colors.white)),
-              const SizedBox(height: 4),
-              Text(subtitle, textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 13,
-                  color: Colors.white.withOpacity(0.45))),
-              const SizedBox(height: 20),
-              if (won) Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(i < stars ? '⭐' : '☆',
-                    style: TextStyle(fontSize: 32,
-                      color: i < stars
-                        ? const Color(0xFFFFD700)
-                        : Colors.white.withOpacity(0.15))),
-                )),
-              ),
-              if (won) const SizedBox(height: 20),
-              Row(children: [
-                _dStat('🎯', '$_movesUsed/${_config['maxMoves']}', 'MOVES'),
-                const SizedBox(width: 8),
-                _dStat('✅', '$_matches/${_config['pairs']}', 'PAIRS'),
-                const SizedBox(width: 8),
-                _dStat('🔥', '$_maxCombo', 'COMBO'),
-              ]),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: (won ? color : const Color(0xFFF7971E)).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: (won ? color : const Color(0xFFF7971E)).withOpacity(0.3))),
-                child: Text(
-                  won
-                    ? stars == 3 ? '🔥 Flawless memory! Incredible!'
-                      : stars == 2 ? '💪 Great job! Keep it up!'
-                      : '✅ Level cleared! Try fewer moves next time!'
-                    : reason == 'moves'
-                      ? '💡 Plan your flips carefully — try again!'
-                      : '💡 So close! Try again, you got this!',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600,
-                    color: won ? color : const Color(0xFFF7971E))),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton(
-                  onPressed: () { Navigator.pop(context); _start(); },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16))),
-                  child: Text('Try Again 🔄',
-                    style: GoogleFonts.inter(fontSize: 16,
-                      fontWeight: FontWeight.w700, color: Colors.white)),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (won && widget.level < 30)
-                SizedBox(
-                  width: double.infinity, height: 52,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(context, MaterialPageRoute(
-                        builder: (_) => MemoryGameScreen(level: widget.level + 1)));
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: color),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16))),
-                    child: Text('Next Level →',
-                      style: GoogleFonts.inter(fontSize: 16,
-                        fontWeight: FontWeight.w700, color: color)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Icon Badge
+                Container(
+                  width: 76,
+                  height: 76,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: won
+                          ? [color, color.withOpacity(0.6)]
+                          : [const Color(0xFF2A2A3C), const Color(0xFF1E1E2C)],
+                    ),
+                    boxShadow: won
+                        ? [
+                            BoxShadow(
+                              color: color.withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            )
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    mainIcon,
+                    size: 38,
+                    color: won ? Colors.white : Colors.white.withOpacity(0.6),
                   ),
                 ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () { Navigator.pop(context); Navigator.pop(context); },
-                child: Text('Back to Levels',
-                  style: GoogleFonts.inter(fontSize: 14,
-                    color: Colors.white.withOpacity(0.35))),
-              ),
-            ]),
+                const SizedBox(height: 16),
+
+                // Title & Subtitle
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withOpacity(0.5),
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Stars Row
+                if (won) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      3,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(
+                          i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: 36,
+                          color: i < stars ? const Color(0xFFFFB800) : Colors.white.withOpacity(0.15),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Stats Section
+                Row(
+                  children: [
+                    _dStat(
+                      Icons.ads_click_rounded,
+                      '${_movesUsed}/${_config['maxMoves']}',
+                      'MOVES',
+                      const Color(0xFF3B82F6),
+                    ),
+                    const SizedBox(width: 8),
+                    _dStat(
+                      Icons.style_rounded,
+                      '${_matches}/${_config['pairs']}',
+                      'PAIRS',
+                      const Color(0xFF10B981),
+                    ),
+                    const SizedBox(width: 8),
+                    _dStat(
+                      Icons.local_fire_department_rounded,
+                      '$_maxCombo',
+                      'COMBO',
+                      const Color(0xFFF59E0B),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Feedback Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: (won ? color : const Color(0xFFF59E0B)).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: (won ? color : const Color(0xFFF59E0B)).withOpacity(0.25),
+                    ),
+                  ),
+                  child: Text(
+                    won
+                        ? (stars == 3
+                            ? 'Flawless memory! Outstanding work.'
+                            : stars == 2
+                                ? 'Great job! Keep up the accuracy.'
+                                : 'Level cleared! Try fewer moves next time.')
+                        : (reason == 'moves'
+                            ? 'Plan your flips carefully on your next try.'
+                            : 'So close! Give it another shot.'),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: won ? color : const Color(0xFFF59E0B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Action Buttons
+                if (won && widget.level < 30) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MemoryGameScreen(level: widget.level + 1),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Next Level',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _start();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withOpacity(0.12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.refresh_rounded, size: 18, color: Colors.white.withOpacity(0.8)),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Try Again',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _start();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Try Again',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  icon: Icon(
+                    Icons.grid_view_rounded,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                  label: Text(
+                    'Back to Levels',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _dStat(String em, String val, String lbl) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0E17), borderRadius: BorderRadius.circular(14)),
-      child: Column(children: [
-        Text(em, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: 4),
-        Text(val, style: GoogleFonts.inter(fontSize: 14,
-          fontWeight: FontWeight.w800, color: Colors.white)),
-        Text(lbl, style: GoogleFonts.inter(fontSize: 9,
-          fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.35))),
-      ]),
-    ),
-  );
-
+  Widget _dStat(IconData icon, String val, String lbl, Color accentColor) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F18),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 20, color: accentColor),
+              const SizedBox(height: 6),
+              Text(
+                val,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                lbl,
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.4),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
   @override
   Widget build(BuildContext context) {
     final color    = _config['color'] as Color;
