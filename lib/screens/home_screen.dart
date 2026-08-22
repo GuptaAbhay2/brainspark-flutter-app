@@ -229,8 +229,10 @@ class HomeScreen extends ConsumerWidget {
       ),
 
       // ───────────────── FLOATING BOTTOM NAV ─────────────────
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      bottomNavigationBar: SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
         height: 68,
         decoration: BoxDecoration(
           color: _surface,
@@ -274,8 +276,9 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    )
     );
-  } // <-- IS CLOSING BRACE SE ERROR FIX HO GAYA
+  }
 
   // ───────────────── TALL HERO DAILY CHALLENGE BANNER ─────────────────
   Widget _dailyChallengeHeroBanner(BuildContext context) {
