@@ -371,11 +371,11 @@ class _LogicState extends ConsumerState<LogicPuzzleScreen>
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    _buildStatCard('✨', '$_score', 'SCORE'),
+                    _buildStatCard(' ' ,'$_score', 'SCORE'),
                     const SizedBox(width: 8),
-                    _buildStatCard('🎯', '$_correct/$_totalRounds', 'SOLVED'),
+                    _buildStatCard( ' ','$_correct/$_totalRounds', 'SOLVED'),
                     const SizedBox(width: 8),
-                    _buildStatCard('⚡', '$accuracy%', 'ACCURACY'),
+                    _buildStatCard( ' ' ,'$accuracy%', 'ACCURACY'),
                   ],
                 ),
                 if (_hintsUsed > 0) ...[

@@ -165,151 +165,290 @@ class _RCState extends ConsumerState<ReactionChainScreen>
   int   get _totalCount => _modes[_modeIdx]['count'] as int;
   String get _modeLabel => _modes[_modeIdx]['label'] as String;
 
-  void _showResult() {
+void _showResult() {
     _celebCtrl.forward(from: 0);
-    final box      = Hive.box('userBox');
-    final best     = box.get('rc_best_$_modeLabel', defaultValue: 0) as int;
+    final box = Hive.box('userBox');
+    final best = box.get('rc_best_$_modeLabel', defaultValue: 0) as int;
     final isNewBest = _elapsed <= best && best > 0;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.88),
+      barrierColor: Colors.black.withOpacity(0.85),
       builder: (_) => ScaleTransition(
         scale: _celebAnim,
         child: Dialog(
           backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Container(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C2E),
+              color: const Color(0xFF161622),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: _modeColor.withOpacity(0.4)),
-              boxShadow: [BoxShadow(
-                color: _modeColor.withOpacity(0.2), blurRadius: 40)],
+              border: Border.all(
+                color: _modeColor.withOpacity(0.35),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _modeColor.withOpacity(0.2),
+                  blurRadius: 32,
+                  spreadRadius: 2,
+                )
+              ],
             ),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                width: 88, height: 88,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [_modeColor, _modeColor2]),
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(
-                    color: _modeColor.withOpacity(0.4), blurRadius: 24)]),
-                child: Center(child: Text(
-                  isNewBest ? '🏆' : '✅',
-                  style: const TextStyle(fontSize: 40))),
-              ),
-              const SizedBox(height: 16),
-              Text(isNewBest ? 'New Personal Best!' : 'Completed!',
-                style: GoogleFonts.inter(fontSize: 22,
-                  fontWeight: FontWeight.w800, color: Colors.white)),
-              const SizedBox(height: 4),
-              Text(_errors == 0 ? 'Perfect run — no errors! 🔥'
-                : '$_errors error${_errors > 1 ? 's' : ''} made',
-                style: GoogleFonts.inter(fontSize: 13,
-                  color: Colors.white.withOpacity(0.45))),
-              const SizedBox(height: 24),
-
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [
-                    _modeColor.withOpacity(0.15),
-                    _modeColor2.withOpacity(0.05)]),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _modeColor.withOpacity(0.3))),
-                child: Column(children: [
-                  Text(_fmtTime(_elapsed),
-                    style: GoogleFonts.inter(fontSize: 44,
-                      fontWeight: FontWeight.w900, color: _modeColor)),
-                  Text('YOUR TIME',
-                    style: GoogleFonts.inter(fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withOpacity(0.35), letterSpacing: 1)),
-                  if (best > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text('Best: ${_fmtTime(best)}',
-                        style: GoogleFonts.inter(fontSize: 12,
-                          color: Colors.white.withOpacity(0.4))),
-                    ),
-                ]),
-              ),
-              const SizedBox(height: 16),
-
-              Row(children: [
-                _dStat('❌', '$_errors', 'ERRORS'),
-                const SizedBox(width: 8),
-                _dStat('⚡', _avgTap > 0 ? '${_avgTap}ms' : '--', 'AVG TAP'),
-                const SizedBox(width: 8),
-                _dStat('🎯', '$_totalCount', 'TAPS'),
-              ]),
-              const SizedBox(height: 20),
-
-              if (isNewBest)
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top Icon Badge
                 Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
+                  width: 76,
+                  height: 76,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFD700).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFFFD700).withOpacity(0.3))),
-                  child: Text('🏆 New personal best! Keep practicing!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFFFD700))),
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_modeColor, _modeColor2],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _modeColor.withOpacity(0.4),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      )
+                    ],
+                  ),
+                  child: Icon(
+                    isNewBest ? Icons.emoji_events_rounded : Icons.check_circle_rounded,
+                    size: 38,
+                    color: Colors.white,
+                  ),
                 ),
+                const SizedBox(height: 16),
 
-              SizedBox(
-                width: double.infinity, height: 52,
-                child: ElevatedButton(
-                  onPressed: () { Navigator.pop(context); _startGame(); },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _modeColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16))),
-                  child: Text('Play Again 🔄',
-                    style: GoogleFonts.inter(fontSize: 16,
-                      fontWeight: FontWeight.w700, color: Colors.white)),
+                // Title & Subtitle
+                Text(
+                  isNewBest ? 'New Personal Best!' : 'Challenge Completed!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: Text('Back to Home',
-                  style: GoogleFonts.inter(fontSize: 14,
-                    color: Colors.white.withOpacity(0.35))),
-              ),
-            ]),
+                const SizedBox(height: 6),
+                Text(
+                  _errors == 0
+                      ? 'Perfect run — zero errors recorded.'
+                      : '$_errors error${_errors > 1 ? 's' : ''} during the run.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Main Time Display Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _modeColor.withOpacity(0.15),
+                        _modeColor2.withOpacity(0.05),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _modeColor.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        _fmtTime(_elapsed),
+                        style: GoogleFonts.inter(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w900,
+                          color: _modeColor,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        'YOUR TIME',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withOpacity(0.4),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      if (best > 0) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Personal Best: ${_fmtTime(best)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Stats Section
+                Row(
+                  children: [
+                    _dStat(
+                      Icons.error_outline_rounded,
+                      '$_errors',
+                      'ERRORS',
+                      const Color(0xFFEF4444),
+                    ),
+                    const SizedBox(width: 8),
+                    _dStat(
+                      Icons.bolt_rounded,
+                      _avgTap > 0 ? '${_avgTap}ms' : '--',
+                      'AVG TAP',
+                      const Color(0xFFF59E0B),
+                    ),
+                    const SizedBox(width: 8),
+                    _dStat(
+                      Icons.touch_app_rounded,
+                      '$_totalCount',
+                      'TAPS',
+                      const Color(0xFF3B82F6),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Record Highlight Banner
+                if (isNewBest) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFFFD700).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      'New record set! Exceptional reaction speed.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFFFD700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Action Buttons
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _startGame();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _modeColor,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.refresh_rounded, size: 18, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Play Again',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 16,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                  label: Text(
+                    'Back to Home',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _dStat(String em, String val, String lbl) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0E17),
-        borderRadius: BorderRadius.circular(14)),
-      child: Column(children: [
-        Text(em, style: const TextStyle(fontSize: 18)),
-        const SizedBox(height: 4),
-        Text(val, style: GoogleFonts.inter(fontSize: 15,
-          fontWeight: FontWeight.w800, color: Colors.white)),
-        Text(lbl, style: GoogleFonts.inter(fontSize: 9,
-          fontWeight: FontWeight.w600,
-          color: Colors.white.withOpacity(0.35))),
-      ]),
-    ),
-  );
+  Widget _dStat(IconData icon, String val, String lbl, Color accentColor) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F18),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 20, color: accentColor),
+              const SizedBox(height: 6),
+              Text(
+                val,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                lbl,
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withOpacity(0.4),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {

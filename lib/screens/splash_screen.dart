@@ -29,7 +29,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
 
     _ctrl.forward();
-    Future.delayed(const Duration(milliseconds: 2000), _navigate);
+    Future.delayed(const Duration(milliseconds: 1800), _navigate);
   }
 
   Future<void> _navigate() async {
